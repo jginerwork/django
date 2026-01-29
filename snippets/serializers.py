@@ -185,6 +185,7 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CommentSerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(source='like.count', read_only=True)
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ['text', 'owner', 'likes_count', 'snippet']
