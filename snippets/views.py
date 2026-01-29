@@ -97,6 +97,8 @@ class SnippetViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
     def like(self, request, *args, **kwargs):
         snippet = self.get_object()
+        if snippet.draft:
+            return Response({'error': "You can't like a draft"}, status=400)
         if snippet.like.filter(id=self.request.user.id).exists():
             snippet.like.remove(self.request.user)
             return Response(status=204)
