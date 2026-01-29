@@ -149,3 +149,11 @@ class Genre(Base):
 
     def __str__(self):
         return self.name
+    
+class Comment(models.Model):
+    text = models.CharField(max_length=100)
+    owner = models.ForeignKey("auth.User", related_name= "comments", on_delete=models.CASCADE)
+    like = models.ManyToManyField("auth.User", related_name="comment_likes", blank=True)
+
+    def __str__(self):
+        return self.text
