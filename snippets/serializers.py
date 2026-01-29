@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES, editorial, book, opinion, country, region, municipality, city, town, Genre #llistes que hem generat abans
+from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES, editorial, book, opinion, country, region, municipality, city, town, Genre, Comment #llistes que hem generat abans
 from django.contrib.auth.models import User
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -62,6 +62,9 @@ class SnippetSerializer(serializers.HyperlinkedModelSerializer):
     ) 
     fuente = serializers.HyperlinkedRelatedField(queryset = book.objects.all(), read_only=False, view_name = "snippets:book-detail", required = False, allow_null=True)
     likes_count = serializers.IntegerField(source='like.count', read_only=True)
+    comments = serializers.HyperlinkedRelatedField(
+        many=True, view_name="snippets:comment-detail", read_only=True
+    )
 
     class Meta:
         model = Snippet
@@ -78,6 +81,7 @@ class SnippetSerializer(serializers.HyperlinkedModelSerializer):
             "fuente",
             "draft",
             "likes_count",
+            "comments"
         ]
 
         extra_kwargs = {'url': {'view_name': 'snippets:snippet-detail'}}
@@ -178,4 +182,9 @@ class TownSerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
+        fields = '__all__'
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
         fields = '__all__'

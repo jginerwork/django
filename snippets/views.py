@@ -5,7 +5,7 @@
 #from rest_framework import status
 #from rest_framework.decorators import api_view
 #from rest_framework.response import Response
-from snippets.models import Snippet, book, editorial, opinion, country, region, municipality, town, city, Genre#, company #model definit anteriornment
+from snippets.models import Snippet, book, editorial, opinion, country, region, municipality, town, city, Genre, Comment#, company #model definit anteriornment
 from snippets.serializers import BookSerializer, SnippetSerializer, UserSerializer #serializer que hem creat
 from django.http import Http404
 from rest_framework.views import APIView
@@ -22,7 +22,7 @@ from rest_framework.reverse import reverse
 from rest_framework import renderers
 from rest_framework import viewsets
 from django.db import connection
-from .serializers import EditorialSerializer, UserRegistrationSerializer, OpinionSerializer, CountrySerializer, RegionSerializer, MunicipalitySerializer, CitySerializer, TownSerializer, GenreSerializer#, CompanySerializer
+from .serializers import EditorialSerializer, UserRegistrationSerializer, OpinionSerializer, CountrySerializer, RegionSerializer, MunicipalitySerializer, CitySerializer, TownSerializer, GenreSerializer, CommentSerializer#, CompanySerializer
 from rest_framework.decorators import throttle_classes
 from rest_framework.throttling import UserRateThrottle
 from django.views.decorators.csrf import csrf_exempt
@@ -263,3 +263,7 @@ class GenreViewSet(CapitalizeMixin, viewsets.ModelViewSet):
     queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     lookup_field = 'name'
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all().order_by('id')
+    serializer_class = CommentSerializer
