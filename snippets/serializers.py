@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES #llistes que hem generat abans
+from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES, editorial, book, opinion, country, region, municipality, city, town, Genre #llistes que hem generat abans
 from django.contrib.auth.models import User
+from rest_framework.validators import UniqueTogetherValidator
 
 
 
@@ -55,10 +56,12 @@ class UserSerializer(serializers.ModelSerializer):
 #relacions utilitzant hyperlinking
 #no inclueix l'id per defecte, sinó que inclueix un camp url
 class SnippetSerializer(serializers.HyperlinkedModelSerializer):
-    owner = serializers.ReadOnlyField(source="owner.username")
+    owner = serializers.HyperlinkedRelatedField(read_only=True, view_name = "snippets:user-detail")
     highlight = serializers.HyperlinkedIdentityField(
-        view_name="snippet-highlight", format="html"
-    )
+        view_name="snippets:snippet-highlight", format="html"
+    ) 
+    fuente = serializers.HyperlinkedRelatedField(queryset = book.objects.all(), read_only=False, view_name = "snippets:book-detail", required = False, allow_null=True)
+    likes_count = serializers.IntegerField(source='like.count', read_only=True)
 
     class Meta:
         model = Snippet
@@ -72,14 +75,107 @@ class SnippetSerializer(serializers.HyperlinkedModelSerializer):
             "linenos",
             "language",
             "style",
+            "fuente",
+            "draft",
+            "likes_count",
         ]
+
+        extra_kwargs = {'url': {'view_name': 'snippets:snippet-detail'}}
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     snippets = serializers.HyperlinkedRelatedField(
-        many=True, view_name="snippet-detail", read_only=True
+        many=True, view_name="snippets:snippet-detail", read_only=True
     )
 
     class Meta:
         model = User
         fields = ["url", "id", "username", "snippets"]
+        extra_kwargs = {'url': {'view_name': 'snippets:user-detail'}}
+
+
+class BookSerializer(serializers.HyperlinkedModelSerializer):
+    snippets = serializers.HyperlinkedRelatedField(many = True, read_only = True, view_name="snippets:snippet-detail")
+    author = serializers.HyperlinkedRelatedField(queryset= User.objects.all(), read_only=False,view_name="snippets:user-detail")
+    editorial = serializers.HyperlinkedRelatedField(queryset=editorial.objects.all(), view_name="snippets:editorial-detail")
+    opinions = serializers.HyperlinkedRelatedField(many=True, read_only = True, view_name = "snippets:opinion-detail")
+    class Meta:
+        model = book
+        fields = ["url", "id", "title", "snippets", "author", "editorial", "opinions"]
+        extra_kwargs = {'url': {'view_name': 'snippets:book-detail'}}
+
+class UserRegistrationSerializer(serializers.ModelSerializer): #model serializer: 
+    password = serializers.CharField(write_only=True)
+    class Meta:
+        model = User
+        fields = ["username", "email", "password", "first_name", "last_name"]
+
+    def create(self, validated_data): #per utilitzar validated_data necessitem o un create o un update
+        user = User.objects.create_user(
+            username= validated_data["username"], #o retornen les dades validades o salta excepció
+            email = validated_data["email"],
+            password = validated_data["password"],
+            first_name = validated_data.get("first_name", ""),
+            last_name = validated_data.get("last_name", ""),
+        )   
+        return user
+
+class EditorialSerializer(serializers.HyperlinkedModelSerializer):
+    books = serializers.HyperlinkedRelatedField(many = True, read_only = True, view_name = "snippets:book-detail")
+    class Meta:
+        model = editorial
+        fields = ["url", "id", "name", "books", "email", "countries"]
+
+class OpinionSerializer(serializers.HyperlinkedModelSerializer):
+    book = serializers.HyperlinkedRelatedField(queryset = book.objects.all(), view_name = "snippets:book-detail")
+    author = serializers.HyperlinkedIdentityField(read_only=False,view_name="snippets:user-detail")
+    class Meta:
+        model = opinion
+        fields = ["url", "id", "title", "text", "rating", "author", "book", "date"]
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = country
+        fields = ["id", "name"]
+
+class RegionSerializer(serializers.ModelSerializer):
+    country = serializers.SlugRelatedField(
+        queryset=country.objects.all(),
+        slug_field='name'
+    )
+    class Meta:
+        model = region
+        fields = '__all__'
+
+class MunicipalitySerializer(serializers.ModelSerializer):
+    region = serializers.StringRelatedField()
+    class Meta:
+        model = municipality
+        fields = '__all__'
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = city
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=municipality.objects.all(),
+                fields = ['name', 'region']
+            )
+        ]
+
+class TownSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = town
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=municipality.objects.all(),
+                fields = ['name', 'region']
+            )
+        ]
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Genre
+        fields = '__all__'

@@ -1,0 +1,1 @@
+funció reverse: retorna la url quan li passes el nom de la vista

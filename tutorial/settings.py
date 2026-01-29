@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework', #per poder utilitzar el framework
     'snippets', #per poder utilitzar la app que hem creat
+    'polls',
 ]
 
 MIDDLEWARE = [
@@ -128,3 +129,9 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
 }
+
+# Redirigir aquí tras hacer LOGIN correctamente
+LOGIN_REDIRECT_URL = '/' 
+
+# Redirigir aquí tras hacer LOGOUT (opcional pero recomendado)
+LOGOUT_REDIRECT_URL = '/'

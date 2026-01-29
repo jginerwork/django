@@ -1,21 +1,16 @@
-"""
-URL configuration for tutorial project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.urls import path, include
+from django.contrib import admin
+from django.urls import include, path
 
 urlpatterns = [
+    # 1. Panel de administración (opcional, pero útil)
+    path("admin/", admin.site.urls),
+
+    # 2. Incluimos las URLs de tu app 'snippets'
+    # Como snippets/urls.py ya tiene los routers, esto generará rutas como /snippets/, /users/, etc.
     path("", include("snippets.urls")),
+
+    # 3. Login global de DRF
+    # Al ponerlo aquí (en la raíz), el namespace 'rest_framework' se registra globalmente.
+    # Esto soluciona el error de la plantilla de login.
+    path("api-auth/", include("rest_framework.urls")),
 ]
