@@ -33,6 +33,7 @@ from django.views import View
 from django.views.generic.list import MultipleObjectMixin
 from django.db.models import Q
 from django.db.models import Count  # <--- Asegúrate de tener este import arriba
+from rest_framework.exceptions import ValidationError
 
 @api_view(["GET"])
 def api_root(request, format=None):
@@ -71,13 +72,20 @@ class SnippetViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user) #save s'utilitza per retornar una instància
 
+    def perform_update(self, serializer):
+        snippet = self.get_object()
+        if(snippet.draft):
+            return super().perform_update(serializer)
+        raise ValidationError({'error': 'Snippet is published'})
+        
+
     def get_queryset(self):
 
         if self.request.user.is_authenticated:
             return Snippet.objects.filter(Q(draft=True) & Q(owner=self.request.user) | Q(draft=False))
         return Snippet.objects.filter(draft=False)
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post', 'get'])
     def publish(self, request, *args, **kwargs):
         snippet = self.get_object()
         if self.request.user == snippet.owner:
