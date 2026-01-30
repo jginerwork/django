@@ -63,7 +63,7 @@ class SnippetSerializer(serializers.HyperlinkedModelSerializer):
     fuente = serializers.HyperlinkedRelatedField(queryset = book.objects.all(), read_only=False, view_name = "snippets:book-detail", required = False, allow_null=True)
     likes_count = serializers.IntegerField(source='like.count', read_only=True)
     comments = serializers.HyperlinkedRelatedField(
-        many=True, view_name="snippets:comment-detail", read_only=True
+        many=True, read_only=True
     )
 
     class Meta:
@@ -186,6 +186,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     likes_count = serializers.IntegerField(source='like.count', read_only=True)
+    owner = serializers.ReadOnlyField(source='owner.username')
     class Meta:
         model = Comment
         fields = ['text', 'owner', 'likes_count', 'snippet']

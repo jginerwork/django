@@ -111,6 +111,18 @@ class SnippetViewSet(viewsets.ModelViewSet):
         snippets = Snippet.objects.filter(draft=False).select_related('owner').annotate(total_likes=Count('like')).order_by("-total_likes")
         serializer = self.get_serializer(snippets, many=True)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def add_comment(self, request, pk=None):
+        snippet = self.get_object()
+
+        serializer = CommentSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(owner=request.user, snippet=snippet)
+            return Response(serializer.data, status=201)
+        
+        return Response(serializer.errors, status=400)
 
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -263,7 +275,3 @@ class GenreViewSet(CapitalizeMixin, viewsets.ModelViewSet):
     queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     lookup_field = 'name'
-
-class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all().order_by('id')
-    serializer_class = CommentSerializer
