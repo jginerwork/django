@@ -1,7 +1,6 @@
 import pytest
 from django.urls import reverse 
 from snippets.models import region, country, town, town, municipality
-import snippets.urls
 import json
 
 @pytest.mark.django_db

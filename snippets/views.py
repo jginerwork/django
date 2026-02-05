@@ -5,7 +5,7 @@
 #from rest_framework import status
 #from rest_framework.decorators import api_view
 #from rest_framework.response import Response
-from snippets.models import Snippet, book, editorial, opinion, country, region, municipality, town, city, Genre, Comment#, company #model definit anteriornment
+from snippets.models import Snippet, book, editorial, opinion, country, region, municipality, town, city, Genre, Comment, Following, Notification#, company #model definit anteriornment
 from snippets.serializers import BookSerializer, SnippetSerializer, UserSerializer #serializer que hem creat
 from django.http import Http404
 from rest_framework.views import APIView
@@ -22,7 +22,7 @@ from rest_framework.reverse import reverse
 from rest_framework import renderers
 from rest_framework import viewsets
 from django.db import connection
-from .serializers import EditorialSerializer, UserRegistrationSerializer, OpinionSerializer, CountrySerializer, RegionSerializer, MunicipalitySerializer, CitySerializer, TownSerializer, GenreSerializer, CommentSerializer#, CompanySerializer
+from .serializers import EditorialSerializer, UserRegistrationSerializer, OpinionSerializer, CountrySerializer, RegionSerializer, MunicipalitySerializer, CitySerializer, TownSerializer, GenreSerializer, CommentSerializer, NotificationSerializer#, CompanySerializer
 from rest_framework.decorators import throttle_classes
 from rest_framework.throttling import UserRateThrottle
 from django.views.decorators.csrf import csrf_exempt
@@ -57,6 +57,15 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = User.objects.prefetch_related("snippets").all()
     serializer_class = UserSerializer
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def follow(self, request, *args, **kwargs):
+        connections = Following.objects.filter(user_follower=request.user, user_followed=self.get_object())
+        if connections.exists():
+            connections.delete()
+            return Response(status=204)
+        Following.objects.create(user_follower=request.user, user_followed=self.get_object())
+        return Response(status=201)
+
 class SnippetViewSet(viewsets.ModelViewSet):
     queryset = Snippet.objects.select_related("owner").all() #agafa directament l'owner de la base de dades
     serializer_class = SnippetSerializer
@@ -85,6 +94,13 @@ class SnippetViewSet(viewsets.ModelViewSet):
             return Snippet.objects.filter(Q(draft=True) & Q(owner=self.request.user) | Q(draft=False))
         return Snippet.objects.filter(draft=False)
     
+    def get_serializer_class(self):
+        # Si la acción es 'add_comment', usa el serializer de comentarios
+        if self.action == 'add_comment':
+            return CommentSerializer
+        # Para todo lo demás (list, retrieve, create...), usa el de Snippets
+        return SnippetSerializer
+    
     @action(detail=True, methods=['post', 'get'])
     def publish(self, request, *args, **kwargs):
         snippet = self.get_object()
@@ -112,17 +128,29 @@ class SnippetViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(snippets, many=True)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
     def add_comment(self, request, pk=None):
-        snippet = self.get_object()
+        if request.method == 'GET':
+            serializer = self.get_serializer()
+            return Response(serializer.data)
 
-        serializer = CommentSerializer(data=request.data)
+        # Si es POST, procesamos los datos
+        snippet = self.get_object()
+        serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save(owner=request.user, snippet=snippet)
             return Response(serializer.data, status=201)
         
         return Response(serializer.errors, status=400)
+    
+    @action(detail=False, permission_classes=[permissions.IsAuthenticated])
+    def filter_following(self, request, *args, **kwargs):
+        users_followed = User.objects.filter(followed__user_follower=request.user)
+        snippets = Snippet.objects.filter(owner__in=users_followed)
+        serializer = self.get_serializer(snippets, many=True)
+        return Response(data=serializer.data, status=200)
+    
 
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -142,7 +170,7 @@ class OpinionViewSet(viewsets.ModelViewSet):
     serializer_class = OpinionSerializer
     
     def perform_create(self, serializer):
-        serializer.save(autor=self.request.user)
+        serializer.save(author=self.request.user)
 
 class CountryViewSet(viewsets.ModelViewSet):
     queryset = country.objects.all()
@@ -275,3 +303,44 @@ class GenreViewSet(CapitalizeMixin, viewsets.ModelViewSet):
     queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     lookup_field = 'name'
+
+class CommentViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, *args, **kwargs):
+        comment = self.get_object()
+        if comment.like.filter(id=self.request.user.id).exists():
+            comment.like.remove(self.request.user)
+            return Response(status=204)
+        else:
+            comment.like.add(self.request.user)
+            return Response(status=204)
+        
+    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
+    def add_comment(self, request, pk=None):
+        parent_comment = self.get_object()
+        if request.method == 'GET':
+            serializer = self.get_serializer()
+            return Response(serializer.data)
+
+        # Si es POST, procesamos los datos
+        serializer = self.get_serializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(
+                owner=request.user, 
+                parent=parent_comment, 
+                snippet=parent_comment.snippet
+            )
+            return Response(serializer.data, status=201)
+        
+        return Response(serializer.errors, status=400)
+    
+class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user)

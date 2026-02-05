@@ -60,6 +60,7 @@ router.register(r"country", views.CountryViewSet, basename = "country")
 router.register(r"regions", views.RegionViewSet, basename = "region")
 router.register(r"genres", views.GenreViewSet, basename="genre")
 router.register(r"comments", views.CommentViewSet, basename="comment")
+router.register(r"notifications", views.NotificationViewSet, basename="notification")
 
 #router.register(r"company", views.CompanyViewSet, basename = "company")
 

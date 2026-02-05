@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework', #per poder utilitzar el framework
     'snippets', #per poder utilitzar la app que hem creat
     'polls',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -128,6 +129,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Mi API de Django',
+    'DESCRIPTION': 'Documentación generada automáticamente',
+    'VERSION': '1.0.0',
 }
 
 # Redirigir aquí tras hacer LOGIN correctamente

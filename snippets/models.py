@@ -8,6 +8,8 @@ from pygments import highlight
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 LEXERS = [item for item in get_all_lexers() if item[1]] #devuelve los lenguajes con un alias (?)
 LANGUAGE_CHOICES = sorted([(item[1][0], item[0]) for item in LEXERS]) #devuelve lista de tuplas (alias_lenguaje, nombre_lenguaje)
@@ -85,10 +87,12 @@ class company(models.Model):
 
 class editorial(models.Model):
     #company = models.OneToOneField(company, on_delete = models.CASCADE, parent_link= True)
-    countries = models.ManyToManyField("country", related_name = "editorials")
+    countries = models.ManyToManyField("country", related_name = "editorials", blank=True)
+    name = models.CharField(max_length = 100, default = "", blank=True, null=True)
+    email = models.EmailField(max_length = 254, null = True)
 
     def __str__(self):
-        return self.company.name
+        return self.name
 
 
 class opinion(models.Model):
@@ -155,6 +159,26 @@ class Comment(models.Model):
     owner = models.ForeignKey("auth.User", related_name= "comments", on_delete=models.CASCADE)
     like = models.ManyToManyField("auth.User", related_name="comment_likes", blank=True)
     snippet = models.ForeignKey(Snippet, related_name="comments", on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', related_name="replies", on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.text
+    
+class Following(models.Model):
+    user_follower = models.ForeignKey("auth.User", related_name="follower", on_delete=models.CASCADE)
+    user_followed = models.ForeignKey("auth.User", related_name="followed", on_delete=models.CASCADE)
+
+class Notification(models.Model):
+    recipient = models.ForeignKey("auth.User", related_name="notifications", on_delete=models.CASCADE)
+    actor = models.ForeignKey("auth.User", related_name = "actioins", on_delete=models.CASCADE)
+    verb = models.CharField(max_length=255)
+
+    created = models.DateField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    target = GenericForeignKey('content_type', 'object_id')
+
+    class Meta:
+        ordering = ['-created']

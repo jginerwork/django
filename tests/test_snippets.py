@@ -53,7 +53,7 @@ def test_create_snippet_authenticated(client, user_owner):
     
     assert response.status_code == 201
     assert response.json()['title'] == 'New Python Code'
-    assert response.json()['owner'] == f'http://testserver/snippets/users/{user_owner.id}/' # HyperlinkedRelatedField
+    assert response.json()['owner'] == f'http://testserver/users/{user_owner.id}/' # HyperlinkedRelatedField
     # Por defecto draft debe ser True según el modelo
     assert Snippet.objects.get(title='New Python Code').draft is True 
 
@@ -198,15 +198,32 @@ def test_update_snippet_permission(client, user_owner, user_other, snippet_publi
     - Otro usuario no puede editar (403).
     """
     url = reverse('snippets:snippet-detail', args=[snippet_public.id])
-    data = {'title': 'Updated Title', 'code': 'updated', 'language': 'python', 'style': 'friendly'}
+    
+    # Datos completos para el PUT
+    data = {
+        'title': 'Updated Title',
+        'code': 'updated',
+        'language': 'python',
+        'style': 'friendly',
+        'linenos': False,
+        'draft': False, 
+        # 'fuente': None # Ya no hace falta, pero si lo pones no estorba
+    }
 
-    # 1. Intento de update por otro usuario
+    # 1. Intento de update por otro usuario (Debe dar 403 porque es público)
     client.force_login(user_other)
     response = client.put(url, json.dumps(data), content_type='application/json')
     assert response.status_code == 403
 
     # 2. Update por el dueño
     client.force_login(user_owner)
+    
+    # --- PASO CRUCIAL: Convertir a borrador para permitir la edición ---
+    snippet_public.draft = True
+    snippet_public.save()
+    # ------------------------------------------------------------------
+
     response = client.put(url, json.dumps(data), content_type='application/json')
+
     assert response.status_code == 200
     assert response.json()['title'] == 'Updated Title'

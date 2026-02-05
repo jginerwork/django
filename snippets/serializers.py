@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES, editorial, book, opinion, country, region, municipality, city, town, Genre, Comment #llistes que hem generat abans
+from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES, editorial, book, opinion, country, region, municipality, city, town, Genre, Comment, Notification #llistes que hem generat abans
 from django.contrib.auth.models import User
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -53,6 +53,19 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "snippets"]
 """
+class CommentSerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(source='like.count', read_only=True)
+    owner = serializers.ReadOnlyField(source='owner.username')
+    replies = serializers.SerializerMethodField()
+    class Meta:
+        model = Comment
+        fields = ['text', 'owner', 'likes_count', 'id', 'replies']
+
+    def get_replies(self, obj):
+        if obj.replies.exists():
+            # Se llama a sí mismo (recursividad) para serializar los hijos
+            return CommentSerializer(obj.replies.all(), many=True, context=self.context).data
+        return []
 #relacions utilitzant hyperlinking
 #no inclueix l'id per defecte, sinó que inclueix un camp url
 class SnippetSerializer(serializers.HyperlinkedModelSerializer):
@@ -62,9 +75,7 @@ class SnippetSerializer(serializers.HyperlinkedModelSerializer):
     ) 
     fuente = serializers.HyperlinkedRelatedField(queryset = book.objects.all(), read_only=False, view_name = "snippets:book-detail", required = False, allow_null=True)
     likes_count = serializers.IntegerField(source='like.count', read_only=True)
-    comments = serializers.HyperlinkedRelatedField(
-        many=True, read_only=True
-    )
+    comments = CommentSerializer(many=True, read_only=True, default=None)
 
     class Meta:
         model = Snippet
@@ -91,10 +102,11 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
     snippets = serializers.HyperlinkedRelatedField(
         many=True, view_name="snippets:snippet-detail", read_only=True
     )
+    followers = serializers.IntegerField(source='followed.count', read_only=True)
 
     class Meta:
         model = User
-        fields = ["url", "id", "username", "snippets"]
+        fields = ["url", "id", "username", "snippets", "followers"]
         extra_kwargs = {'url': {'view_name': 'snippets:user-detail'}}
 
 
@@ -129,13 +141,19 @@ class EditorialSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = editorial
         fields = ["url", "id", "name", "books", "email", "countries"]
+        extra_kwargs = {
+            'url': {'view_name': 'snippets:editorial-detail'}
+        }
 
 class OpinionSerializer(serializers.HyperlinkedModelSerializer):
     book = serializers.HyperlinkedRelatedField(queryset = book.objects.all(), view_name = "snippets:book-detail")
-    author = serializers.HyperlinkedIdentityField(read_only=False,view_name="snippets:user-detail")
+    author = serializers.ReadOnlyField(source = 'author.username')
     class Meta:
         model = opinion
         fields = ["url", "id", "title", "text", "rating", "author", "book", "date"]
+        extra_kwargs = {
+            'url': {'view_name': 'snippets:opinion-detail'}
+        }
 
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
@@ -184,9 +202,10 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
         fields = '__all__'
 
-class CommentSerializer(serializers.ModelSerializer):
-    likes_count = serializers.IntegerField(source='like.count', read_only=True)
-    owner = serializers.ReadOnlyField(source='owner.username')
+class NotificationSerializer(serializers.ModelSerializer):
+    actor = serializers.ReadOnlyField(source='actor.username')
+    target = serializers.StringRelatedField()
+
     class Meta:
-        model = Comment
-        fields = ['text', 'owner', 'likes_count', 'snippet']
+        model = Notification
+        fields = ['id', 'actor', 'verb', 'target', 'created', 'read']

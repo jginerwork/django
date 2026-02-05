@@ -1,0 +1,40 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: tutorial.settings
+      SECRET_KEY: "django-insecure-test-key"
+      DEBUG: "True"
+
+    # CORRECCIÓN IMPORTANTE: 'steps' debe estar alineado con 'env' y 'runs-on'
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          # Usar '3.9' es mejor que '3.9.6' porque descarga automáticamente el último parche seguro
+          python-version: '3.9' 
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+      # Opcional: Si usas pytest-django, a veces no hace falta migrar manualmente, 
+      # pero dejarlo no hace daño para asegurar que la DB funciona.
+      - name: Aplicar migraciones
+        run: python manage.py migrate
+
+      - name: Correr Tests Unitarios
+        run: pytest
