@@ -1,18 +1,22 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect
-from .models import Question, Choice
 from django.db.models import F
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.views import generic
 from django.utils import timezone
+from django.views import generic
+
+from .models import Choice, Question
+
 
 # Create your views here.
 def detail(request, question_id):
-    return HttpResponse("You're looking at question %s." %question_id)
+    return HttpResponse("You're looking at question %s." % question_id)
+
 
 def results(request, question_id):
     response = "You're looking at the results of question %s."
     return HttpResponse(response % question_id)
+
 
 def vote(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
@@ -23,28 +27,36 @@ def vote(request, question_id):
     else:
         selected_choice.votes = F("votes") + 1
         selected_choice.save()
-        return HttpResponseRedirect(reverse("polls:results", args= (question.id,)))
-#amb questions.objects.get(...) el servidor retorna 500 si no existeix, cal fer try ... except
-#amb get_object_or_404 ja retorna 404 automàticament si no existeix
+        return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
+
+
+# amb questions.objects.get(...) el servidor retorna 500 si no existeix, cal fer try ... except
+# amb get_object_or_404 ja retorna 404 automàticament si no existeix
+
 
 def index(request):
     latest_question_list = Question.objects.order_by("-pub_date")[:5]
     output = ", ".join([q.question_text for q in latest_question_list])
     return HttpResponse(output)
 
+
 class IndexView(generic.ListView):
     template_name = "polls/index.html"
     context_object_name = "latest_question_list"
 
     def get_queryset(self):
-        return Question.objects.filter(pub_date__lte=timezone.now()).order_by("-pub_date")[:5]
-    
+        return Question.objects.filter(pub_date__lte=timezone.now()).order_by(
+            "-pub_date"
+        )[:5]
+
+
 class DetailView(generic.DetailView):
     model = Question
     template_name = "polls/detail.html"
 
     def get_queryset(self):
         return Question.objects.filter(pub_date__lte=timezone.now())
+
 
 class ResultsView(generic.DetailView):
     model = Question

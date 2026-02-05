@@ -1,14 +1,14 @@
 methods:
 - .filter() -> returns subset of objects matching the given conditions
-- .exclude() -> returns subset of objects NOT matching the given conditions 
+- .exclude() -> returns subset of objects NOT matching the given conditions
 - .order_by() -> returns queryset sorted by a specific field
 - .get() -> returns one object. exception if none/more are found
-- .first() -> returns the first object of the QuerySet 
-- .last() -> returns the last object of the QuerySet 
+- .first() -> returns the first object of the QuerySet
+- .last() -> returns the last object of the QuerySet
 - .count() -> returns the number of objects
 - .create() -> creates + saves a new object
 - .update() -> updates all objects in the QuerySet
-- .delete() -> deletes all objects in the QuerySet 
+- .delete() -> deletes all objects in the QuerySet
 
 
 No hi ha interacció amb la base de dades fins que no evalues el Queryset.

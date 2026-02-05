@@ -1,9 +1,11 @@
 import pytest
-from django.urls import reverse, resolve
-from django.utils import timezone
 from django.test import RequestFactory
-from .models import Question, Choice
+from django.urls import reverse
+from django.utils import timezone
+
 from . import views
+from .models import Choice, Question
+
 
 # Marcamos que estos tests necesitan acceso a la base de datos
 @pytest.mark.django_db
@@ -23,10 +25,15 @@ class TestPolls:
     def test_index_view_with_questions(self, client):
         """Prueba que IndexView muestra preguntas pasadas y filtra futuras."""
         # Creamos una pregunta en el pasado
-        q = Question.objects.create(question_text="Past?", pub_date=timezone.now() - timezone.timedelta(days=1))
+        q = Question.objects.create(
+            question_text="Past?", pub_date=timezone.now() - timezone.timedelta(days=1)
+        )
         # Creamos una pregunta en el futuro (no debería salir según views.py línea 54)
-        Question.objects.create(question_text="Future?", pub_date=timezone.now() + timezone.timedelta(days=1))
-        
+        Question.objects.create(
+            question_text="Future?",
+            pub_date=timezone.now() + timezone.timedelta(days=1),
+        )
+
         response = client.get(reverse("polls:index"))
         assert list(response.context["latest_question_list"]) == [q]
 
@@ -41,7 +48,9 @@ class TestPolls:
 
     def test_detail_view_404_future_question(self, client):
         """Prueba que DetailView da 404 si la pregunta es futura (según views.py linea 61)."""
-        future_q = Question.objects.create(question_text="Future", pub_date=timezone.now() + timezone.timedelta(days=1))
+        future_q = Question.objects.create(
+            question_text="Future", pub_date=timezone.now() + timezone.timedelta(days=1)
+        )
         url = reverse("polls:detail", args=(future_q.id,))
         response = client.get(url)
         assert response.status_code == 404
@@ -61,15 +70,15 @@ class TestPolls:
         # Cubre polls/urls.py línea 11 y views.py def vote (éxito)
         q = Question.objects.create(question_text="Vote Q", pub_date=timezone.now())
         c = Choice.objects.create(question=q, choice_text="C1", votes=0)
-        
+
         url = reverse("polls:vote", args=(q.id,))
         # Enviamos POST con la opción seleccionada
-        response = client.post(url, {'choice': c.id})
-        
+        response = client.post(url, {"choice": c.id})
+
         # Debe redirigir (código 302) a results
         assert response.status_code == 302
         assert response.url == reverse("polls:results", args=(q.id,))
-        
+
         # Verificar que el voto se sumó (views.py líneas 39-40)
         c.refresh_from_db()
         assert c.votes == 1
@@ -79,10 +88,10 @@ class TestPolls:
         # Cubre views.py líneas 35-37 (KeyError/DoesNotExist)
         q = Question.objects.create(question_text="Vote Q", pub_date=timezone.now())
         url = reverse("polls:vote", args=(q.id,))
-        
+
         # POST sin datos
         response = client.post(url, {})
-        
+
         assert response.status_code == 400
         assert response.content == b"You didn't select a choice."
 
@@ -90,10 +99,10 @@ class TestPolls:
         """Prueba el error cuando la opción no existe (Choice.DoesNotExist)."""
         q = Question.objects.create(question_text="Vote Q", pub_date=timezone.now())
         url = reverse("polls:vote", args=(q.id,))
-        
+
         # POST con ID que no existe
-        response = client.post(url, {'choice': 9999})
-        
+        response = client.post(url, {"choice": 9999})
+
         assert response.status_code == 400
 
     # --- TESTS PARA CÓDIGO "NO USADO" (Para lograr 100% Coverage) ---
@@ -103,8 +112,8 @@ class TestPolls:
     def test_legacy_functions(self):
         """Test directo a las funciones antiguas en views.py."""
         factory = RequestFactory()
-        request = factory.get('/')
-        
+        request = factory.get("/")
+
         # 1. Testear def detail(request, question_id) - views.py linea 25
         response_detail = views.detail(request, 1)
         assert response_detail.status_code == 200
@@ -113,7 +122,9 @@ class TestPolls:
         # 2. Testear def results(request, question_id) - views.py linea 28
         response_results = views.results(request, 1)
         assert response_results.status_code == 200
-        assert b"You're looking at the results of question 1" in response_results.content
+        assert (
+            b"You're looking at the results of question 1" in response_results.content
+        )
 
         # 3. Testear def index(request) - views.py linea 45
         # Necesitamos preguntas para la línea 47

@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('snippets', '0012_alter_town_population'),
+        ("snippets", "0012_alter_town_population"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='municipality',
-            name='name',
+            model_name="municipality",
+            name="name",
             field=models.CharField(max_length=50),
         ),
         migrations.AlterField(
-            model_name='region',
-            name='name',
+            model_name="region",
+            name="name",
             field=models.CharField(max_length=50),
         ),
     ]
