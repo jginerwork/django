@@ -38,7 +38,7 @@ jobs:
 
       - name: Correr Tests Unitarios y revisar cobertura
         run: pytest --cov=. --cov-report=term-missing --cov-fail-under=80
-lint:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
