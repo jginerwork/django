@@ -36,5 +36,5 @@ jobs:
       - name: Aplicar migraciones
         run: python manage.py migrate
 
-      - name: Correr Tests Unitarios
-        run: pytest
+      - name: Correr Tests Unitarios y revisar cobertura
+        run: pytest --cov=. --cov-report=term-missing --cov-fail-under=80
