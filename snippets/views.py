@@ -266,15 +266,6 @@ class CapitalizeMixin:
                     serializer.validated_data[field] = value.capitalize()
                     
 
-"""class RegionDetail(CapitalizeMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = region.objects.all()
-    serializer_class = RegionSerializer
-    lookup_field = 'name'
-    
-class RegionsList(CapitalizeMixin, generics.ListCreateAPIView):
-    queryset = region.objects.all().order_by('id')
-    serializer_class = RegionSerializer"""
-
 class RegionViewSet(CapitalizeMixin, viewsets.ModelViewSet):
     queryset = region.objects.all().order_by('id')
     serializer_class = RegionSerializer
