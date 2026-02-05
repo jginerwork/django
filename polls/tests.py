@@ -1,95 +1,123 @@
-"""
-from django.test import TestCase
-#TestCase garantitza que els canvis realitzats pels tests s'eliminin després de la seva execució
-
-# Create your tests here.
-
-import datetime
-from django.test import TestCase
+import pytest
+from django.urls import reverse, resolve
 from django.utils import timezone
-from .models import Question
-from django.urls import reverse
+from django.test import RequestFactory
+from .models import Question, Choice
+from . import views
 
-class QuestionModelTests(TestCase):
-    #tots els mètodes de prova han de començar per test_
-    #tots han de tenir asersions:
-    #self.assetEqual(a, b) -> a == b (comprova que tinguin el mateix valor)
-    #self.assertTrue(x) -> x == True
-    #self.assertFalse(x) -> x == False
-    #self.assertIs(a, b) -> a is b (comprova que siguin el mateix objecte de memòria)
-    #self.assertContains(r,'text') -> r conté text
+# Marcamos que estos tests necesitan acceso a la base de datos
+@pytest.mark.django_db
+class TestPolls:
 
-    def test_was_published_recently_with_future_question(self):
-        time = timezone.now() + datetime.timedelta(days=30)
-        future_question = Question(pub_date=time)
-        self.assertIs(future_question.was_published_recently(), False) 
-#utilitzem assertIs perquè només volem que passi si el resultat és el booleà False, no volem qua associi altres valors com 0 o [] a false (el que faria si os equal)
-#el mateix passa amb assertFalse
-    def test_was_published_recently_with_old_question(self):
-        time = timezone.now() - datetime.timedelta(days=1, seconds=1)
-        old_question = Question(pub_date=time)
-        self.assertIs(old_question.was_published_recently(), False)
+    # --- TESTS PARA LAS VISTAS BASADAS EN CLASES (USADAS EN URLS.PY) ---
 
-    def test_was_published_recently_with_recent_question(self):
-        time = timezone.now() - datetime.timedelta(hours=23, minutes=59, seconds=59)
-        recent_question = Question(pub_date=time)
-        self.assertIs(recent_question.was_published_recently(), True)
+    def test_index_view_with_no_questions(self, client):
+        """Prueba que IndexView funciona sin preguntas."""
+        # Esto cubre polls/urls.py línea 8 y views.py IndexView
+        url = reverse("polls:index")
+        response = client.get(url)
+        assert response.status_code == 200
+        assert "latest_question_list" in response.context
+        assert len(response.context["latest_question_list"]) == 0
 
+    def test_index_view_with_questions(self, client):
+        """Prueba que IndexView muestra preguntas pasadas y filtra futuras."""
+        # Creamos una pregunta en el pasado
+        q = Question.objects.create(question_text="Past?", pub_date=timezone.now() - timezone.timedelta(days=1))
+        # Creamos una pregunta en el futuro (no debería salir según views.py línea 54)
+        Question.objects.create(question_text="Future?", pub_date=timezone.now() + timezone.timedelta(days=1))
+        
+        response = client.get(reverse("polls:index"))
+        assert list(response.context["latest_question_list"]) == [q]
 
-def create_question(question_text, days):
-    time = timezone.now() + datetime.timedelta(days=days)
-    return Question.objects.create(question_text=question_text, pub_date=time)
+    def test_detail_view_success(self, client):
+        """Prueba DetailView con una pregunta válida."""
+        # Cubre polls/urls.py línea 9 y views.py DetailView
+        q = Question.objects.create(question_text="Q1", pub_date=timezone.now())
+        url = reverse("polls:detail", args=(q.id,))
+        response = client.get(url)
+        assert response.status_code == 200
+        assert response.context["question"] == q
 
-class QuestionIndexViewTests(TestCase):
-    def test_no_questions(self):
-        response = self.client.get(reverse("polls:index"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "No polls are available.")
-        self.assertQuerySetEqual(response.context["latest_question_list"], [])
-        #verifica que un queryset té els objectes esperats en l'ordre esperat
-    
-    def test_past_question(self):
-        question = create_question(question_text="Past question.", days=-30)
-        response = self.client.get(reverse("polls:index"))
-        self.assertQuerySetEqual(
-            response.context["latest_question_list"],
-            [question],
-        )
+    def test_detail_view_404_future_question(self, client):
+        """Prueba que DetailView da 404 si la pregunta es futura (según views.py linea 61)."""
+        future_q = Question.objects.create(question_text="Future", pub_date=timezone.now() + timezone.timedelta(days=1))
+        url = reverse("polls:detail", args=(future_q.id,))
+        response = client.get(url)
+        assert response.status_code == 404
 
-    def test_future_question(self):
-        create_question(question_text="Future question.", days=30)
-        response = self.client.get(reverse("polls:index"))
-        self.assertContains(response, "No polls are avilable.")
-        self.assertQuerySetEqual(response.context["latest_question_list"], [])
+    def test_results_view(self, client):
+        """Prueba ResultsView."""
+        # Cubre polls/urls.py línea 10 y views.py ResultsView
+        q = Question.objects.create(question_text="Q1", pub_date=timezone.now())
+        url = reverse("polls:results", args=(q.id,))
+        response = client.get(url)
+        assert response.status_code == 200
 
-    def test_future_question_and_past_question(self):
-        question = create_question(question_text="Past question.", days=-30)
-        create_question(question_text="Future question.", days=30)
-        response = self.client.get(reverse("polls:index"))
-        self.assertQuerySetEqual(
-            response.context["latest_question_list"],
-            [question],
-        )
+    # --- TESTS PARA LA FUNCIÓN VOTE (Lógica compleja) ---
 
-    def test_two_past_questiona(self):
-        question1 = create_question(question_text="Past question 1.", days=-30)
-        question2 = create_question(question_text="Past question 2.", days=-5)
-        response = self.client.get(reverse("polls:index"))
-        self.assertQuerySetEqual(
-            response.context["latest_question_list"],
-            [question2, question1],
-        )
+    def test_vote_success(self, client):
+        """Prueba el flujo correcto de votación."""
+        # Cubre polls/urls.py línea 11 y views.py def vote (éxito)
+        q = Question.objects.create(question_text="Vote Q", pub_date=timezone.now())
+        c = Choice.objects.create(question=q, choice_text="C1", votes=0)
+        
+        url = reverse("polls:vote", args=(q.id,))
+        # Enviamos POST con la opción seleccionada
+        response = client.post(url, {'choice': c.id})
+        
+        # Debe redirigir (código 302) a results
+        assert response.status_code == 302
+        assert response.url == reverse("polls:results", args=(q.id,))
+        
+        # Verificar que el voto se sumó (views.py líneas 39-40)
+        c.refresh_from_db()
+        assert c.votes == 1
 
-class QuestionDetailViewTests(TestCase):
-    def test_future_question(self): #els detalls d'una pregunta al futur haurien de ser 404 not found
-        future_question = create_question(question_text="Future question.", days=5)
-        url = reverse("polls:detail", args=(future_question.id,))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
+    def test_vote_failure_no_choice(self, client):
+        """Prueba el error cuando no se selecciona opción."""
+        # Cubre views.py líneas 35-37 (KeyError/DoesNotExist)
+        q = Question.objects.create(question_text="Vote Q", pub_date=timezone.now())
+        url = reverse("polls:vote", args=(q.id,))
+        
+        # POST sin datos
+        response = client.post(url, {})
+        
+        assert response.status_code == 400
+        assert response.content == b"You didn't select a choice."
 
-    def test_past_question(self): #els detalls d'una pregunta al passat han de ser el text de la pregunta
-        past_question = create_question(question_text="Past Question.", days=-5)
-        url = reverse("polls:detail", args=(past_question.id,))
-        response = self.client.get(url)
-        self.assertContains(response, past_question.question_text)
-"""
+    def test_vote_failure_invalid_choice(self, client):
+        """Prueba el error cuando la opción no existe (Choice.DoesNotExist)."""
+        q = Question.objects.create(question_text="Vote Q", pub_date=timezone.now())
+        url = reverse("polls:vote", args=(q.id,))
+        
+        # POST con ID que no existe
+        response = client.post(url, {'choice': 9999})
+        
+        assert response.status_code == 400
+
+    # --- TESTS PARA CÓDIGO "NO USADO" (Para lograr 100% Coverage) ---
+    # Estas funciones (detail, results, index) existen en views.py pero
+    # urls.py no apunta a ellas. Hay que llamarlas manualmente.
+
+    def test_legacy_functions(self):
+        """Test directo a las funciones antiguas en views.py."""
+        factory = RequestFactory()
+        request = factory.get('/')
+        
+        # 1. Testear def detail(request, question_id) - views.py linea 25
+        response_detail = views.detail(request, 1)
+        assert response_detail.status_code == 200
+        assert b"You're looking at question 1" in response_detail.content
+
+        # 2. Testear def results(request, question_id) - views.py linea 28
+        response_results = views.results(request, 1)
+        assert response_results.status_code == 200
+        assert b"You're looking at the results of question 1" in response_results.content
+
+        # 3. Testear def index(request) - views.py linea 45
+        # Necesitamos preguntas para la línea 47
+        Question.objects.create(question_text="Legacy Q", pub_date=timezone.now())
+        response_index = views.index(request)
+        assert response_index.status_code == 200
+        assert b"Legacy Q" in response_index.content
