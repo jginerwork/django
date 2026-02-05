@@ -4,6 +4,7 @@ from django.urls import include, path
 urlpatterns = [
     # 1. Panel de administración (opcional, pero útil)
     path("admin/", admin.site.urls),
+    path("polls/", include("polls.urls")),
 
     # 2. Incluimos las URLs de tu app 'snippets'
     # Como snippets/urls.py ya tiene los routers, esto generará rutas como /snippets/, /users/, etc.
