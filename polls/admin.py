@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from polls.models import Choice, Question
 
 # Register your models here.

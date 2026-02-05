@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from snippets.models import Snippet, book, country, editorial, opinion
 
 # Register your models here.

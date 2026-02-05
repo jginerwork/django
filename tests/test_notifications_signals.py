@@ -1,10 +1,8 @@
 import json
-
 import pytest
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
-
 from snippets.models import Notification, Snippet
 
 

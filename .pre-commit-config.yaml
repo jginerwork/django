@@ -26,16 +26,9 @@ repos:
         args:
           - "--profile"
           - "black"
-          - "--filter-files"
-          # Aquí forzamos una por una tus carpetas
-          - "-p"
-          - "snippets"
-          - "-p"
-          - "polls"
-          - "-p"
-          - "tutorial"
-          - "-p"
-          - "tests"
+          - "--no-sections"  # <--- ESTO ELIMINA LOS ESPACIOS ENTRE GRUPOS
+          - "--line-length"
+          - "88"
 
   # 4. Black (Formatea todo el código AL FINAL)
   - repo: https://github.com/psf/black

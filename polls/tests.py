@@ -1,10 +1,9 @@
 import pytest
+from . import views
+from .models import Choice, Question
 from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
-
-from . import views
-from .models import Choice, Question
 
 
 # Marcamos que estos tests necesitan acceso a la base de datos

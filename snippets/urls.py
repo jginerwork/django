@@ -34,14 +34,13 @@ urlpatterns += [
 ]
 """
 
+from .views import UserRegistrationView, view
+
 # al utilitzar viewsets no cal fer la configuració de les urls de manera manual
 # podem fer-la de manera automàtica utilitzant routers
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-
 from snippets import views
-
-from .views import UserRegistrationView, view
 
 app_name = "snippets"
 

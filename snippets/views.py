@@ -6,6 +6,19 @@
 # from rest_framework.decorators import api_view
 # from rest_framework.response import Response
 
+from .serializers import CitySerializer  # , CompanySerializer
+from .serializers import (
+    CommentSerializer,
+    CountrySerializer,
+    EditorialSerializer,
+    GenreSerializer,
+    MunicipalitySerializer,
+    NotificationSerializer,
+    OpinionSerializer,
+    RegionSerializer,
+    TownSerializer,
+    UserRegistrationSerializer,
+)
 from django.contrib.auth.models import User
 from django.db.models import Count  # <--- Asegúrate de tener este import arriba
 from django.db.models import Q
@@ -18,7 +31,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.throttling import UserRateThrottle
-
 from snippets.models import Comment  # , company #model definit anteriornment
 from snippets.models import (
     Following,
@@ -37,20 +49,6 @@ from snippets.models import (
 from snippets.permissions import IsOwnerOrReadOnly
 from snippets.serializers import BookSerializer  # serializer que hem creat
 from snippets.serializers import SnippetSerializer, UserSerializer
-
-from .serializers import CitySerializer  # , CompanySerializer
-from .serializers import (
-    CommentSerializer,
-    CountrySerializer,
-    EditorialSerializer,
-    GenreSerializer,
-    MunicipalitySerializer,
-    NotificationSerializer,
-    OpinionSerializer,
-    RegionSerializer,
-    TownSerializer,
-    UserRegistrationSerializer,
-)
 
 
 @api_view(["GET"])

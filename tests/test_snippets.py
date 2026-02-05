@@ -1,9 +1,7 @@
 import json
-
 import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
-
 from snippets.models import Snippet
 
 # --- Fixtures (Datos de prueba reutilizables) ---
