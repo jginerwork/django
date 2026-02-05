@@ -23,12 +23,6 @@ repos:
     rev: 5.13.2
     hooks:
       - id: isort
-        args:
-          - "--profile"
-          - "black"
-          # ESTO ES LO NUEVO: Le decimos explícitamente cuáles son TUS carpetas
-          - "-p"
-          - "snippets,polls,tutorial"
 
   # 4. Black (Formatea todo el código AL FINAL)
   - repo: https://github.com/psf/black
