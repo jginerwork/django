@@ -131,3 +131,32 @@ class TestPolls:
         response_index = views.index(request)
         assert response_index.status_code == 200
         assert b"Legacy Q" in response_index.content
+
+    # --- TESTS PARA LOS MÉTODOS DE LOS MODELOS (Para 100% Coverage) ---
+
+    def test_model_str_methods(self):
+        """Prueba los métodos __str__ de los modelos."""
+        # Cubre polls/models.py línea 13 (Question.__str__)
+        q = Question.objects.create(question_text="¿Cuál es tu lenguaje favorito?")
+        assert str(q) == "¿Cuál es tu lenguaje favorito?"
+
+        # Cubre polls/models.py línea 26 (Choice.__str__)
+        c = Choice.objects.create(question=q, choice_text="Python")
+        assert str(c) == "Python"
+
+    def test_was_published_recently(self):
+        """Prueba la lógica de tiempo del método was_published_recently."""
+        # Cubre polls/models.py líneas 16 y 17
+        now = timezone.now()
+
+        # Caso 1: Pregunta publicada hace 1 hora (debe ser True)
+        recent_q = Question(pub_date=now - timezone.timedelta(hours=1))
+        assert recent_q.was_published_recently() is True
+
+        # Caso 2: Pregunta publicada hace 2 días (debe ser False)
+        old_q = Question(pub_date=now - timezone.timedelta(days=2))
+        assert old_q.was_published_recently() is False
+
+        # Caso 3: Pregunta con fecha futura (debe ser False)
+        future_q = Question(pub_date=now + timezone.timedelta(hours=1))
+        assert future_q.was_published_recently() is False
