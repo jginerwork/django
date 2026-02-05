@@ -8,18 +8,20 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('snippets', '0015_genre_alter_country_name_alter_municipality_name_and_more'),
+        ("snippets", "0015_genre_alter_country_name_alter_municipality_name_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='snippet',
-            name='draft',
+            model_name="snippet",
+            name="draft",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='snippet',
-            name='like',
-            field=models.ManyToManyField(blank=True, related_name='likes', to=settings.AUTH_USER_MODEL),
+            model_name="snippet",
+            name="like",
+            field=models.ManyToManyField(
+                blank=True, related_name="likes", to=settings.AUTH_USER_MODEL
+            ),
         ),
     ]

@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('snippets', '0021_notification'),
+        ("snippets", "0021_notification"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='editorial',
-            name='email',
+            model_name="editorial",
+            name="email",
             field=models.EmailField(max_length=254, null=True),
         ),
         migrations.AddField(
-            model_name='editorial',
-            name='name',
-            field=models.CharField(blank=True, default='', max_length=100, null=True),
+            model_name="editorial",
+            name="name",
+            field=models.CharField(blank=True, default="", max_length=100, null=True),
         ),
     ]

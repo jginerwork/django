@@ -7,39 +7,52 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('snippets', '0014_alter_municipality_unique_together'),
+        ("snippets", "0014_alter_municipality_unique_together"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Genre',
+            name="Genre",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50, unique=True)),
-                ('description', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=50, unique=True)),
+                ("description", models.CharField(max_length=100)),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
         migrations.AlterField(
-            model_name='country',
-            name='name',
+            model_name="country",
+            name="name",
             field=models.CharField(max_length=50, unique=True),
         ),
         migrations.AlterField(
-            model_name='municipality',
-            name='name',
+            model_name="municipality",
+            name="name",
             field=models.CharField(max_length=50, unique=True),
         ),
         migrations.AlterField(
-            model_name='region',
-            name='name',
+            model_name="region",
+            name="name",
             field=models.CharField(max_length=50, unique=True),
         ),
         migrations.AlterField(
-            model_name='town',
-            name='population',
-            field=models.IntegerField(validators=[django.core.validators.MaxValueValidator(9999), django.core.validators.MinValueValidator(0)]),
+            model_name="town",
+            name="population",
+            field=models.IntegerField(
+                validators=[
+                    django.core.validators.MaxValueValidator(9999),
+                    django.core.validators.MinValueValidator(0),
+                ]
+            ),
         ),
     ]

@@ -24,17 +24,28 @@ jobs:
         uses: actions/setup-python@v5
         with:
           # Usar '3.9' es mejor que '3.9.6' porque descarga automáticamente el último parche seguro
-          python-version: '3.9' 
+          python-version: '3.9'
 
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      
-      # Opcional: Si usas pytest-django, a veces no hace falta migrar manualmente, 
+
+      # Opcional: Si usas pytest-django, a veces no hace falta migrar manualmente,
       # pero dejarlo no hace daño para asegurar que la DB funciona.
       - name: Aplicar migraciones
         run: python manage.py migrate
 
       - name: Correr Tests Unitarios y revisar cobertura
         run: pytest --cov=. --cov-report=term-missing --cov-fail-under=80
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      # Esta acción oficial instala y ejecuta pre-commit automáticamente
+      - name: Ejecutar Pre-commit
+        uses: pre-commit/action@v3.0.1

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from snippets.models import Snippet, book, editorial, country, opinion
+from snippets.models import Snippet, book, country, editorial, opinion
 
 # Register your models here.
 admin.site.register(Snippet)
@@ -9,4 +9,4 @@ admin.site.register(country)
 admin.site.register(opinion)
 
 
-#quan busco el /admin no fa res
+# quan busco el /admin no fa res

@@ -1,14 +1,18 @@
 asgiref==3.10.0
 attrs==25.4.0
 certifi==2025.11.12
+cfgv==3.4.0
 charset-normalizer==3.4.4
 coverage==7.10.7
 defusedxml==0.7.1
+distlib==0.4.0
 Django==4.2.26
 djangorestframework==3.16.1
 drf-spectacular==0.29.0
 exceptiongroup==1.3.1
+filelock==3.19.1
 httpie==3.2.4
+identify==2.6.15
 idna==3.11
 inflection==0.5.1
 iniconfig==2.1.0
@@ -17,9 +21,12 @@ jsonschema-specifications==2025.9.1
 markdown-it-py==3.0.0
 mdurl==0.1.2
 multidict==6.7.0
+nodeenv==1.10.0
 openapi-generator-cli==7.17.0
 packaging==25.0
+platformdirs==4.4.0
 pluggy==1.6.0
+pre_commit==4.3.0
 Pygments==2.19.2
 PySocks==1.7.1
 pytest==8.4.2
@@ -36,3 +43,4 @@ tomli==2.3.0
 typing_extensions==4.15.0
 uritemplate==4.2.0
 urllib3==1.26.20
+virtualenv==20.36.1

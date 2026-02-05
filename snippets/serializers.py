@@ -1,11 +1,22 @@
-from rest_framework import serializers
-from snippets.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES, editorial, book, opinion, country, region, municipality, city, town, Genre, Comment, Notification #llistes que hem generat abans
 from django.contrib.auth.models import User
+from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+from snippets.models import (
+    Comment,
+    Genre,
+    Notification,
+    Snippet,
+    book,
+    city,
+    country,
+    editorial,
+    municipality,
+    opinion,
+    region,
+    town,
+)
 
-
-
-#los serializers permiten convertir modelos de django a json
+# los serializers permiten convertir modelos de django a json
 """
 class SnippetSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True) #read_only perquè no es pot enviar al crear un snippet
@@ -33,7 +44,7 @@ class SnippetSerializer(serializers.Serializer):
         instance.save() #guarda els canvis a la base de dades
         return instance
 """
-#relacions utilitzant primary keys
+# relacions utilitzant primary keys
 """
 class SnippetSerializer(serializers.ModelSerializer): #shortcut per serializer classes
     owner = serializers.ReadOnlyField(source="owner.username") #també podriem utilitzar CharField(read_only=True)
@@ -53,28 +64,43 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "snippets"]
 """
+
+
 class CommentSerializer(serializers.ModelSerializer):
-    likes_count = serializers.IntegerField(source='like.count', read_only=True)
-    owner = serializers.ReadOnlyField(source='owner.username')
+    likes_count = serializers.IntegerField(source="like.count", read_only=True)
+    owner = serializers.ReadOnlyField(source="owner.username")
     replies = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
-        fields = ['text', 'owner', 'likes_count', 'id', 'replies']
+        fields = ["text", "owner", "likes_count", "id", "replies"]
 
     def get_replies(self, obj):
         if obj.replies.exists():
             # Se llama a sí mismo (recursividad) para serializar los hijos
-            return CommentSerializer(obj.replies.all(), many=True, context=self.context).data
+            return CommentSerializer(
+                obj.replies.all(), many=True, context=self.context
+            ).data
         return []
-#relacions utilitzant hyperlinking
-#no inclueix l'id per defecte, sinó que inclueix un camp url
+
+
+# relacions utilitzant hyperlinking
+# no inclueix l'id per defecte, sinó que inclueix un camp url
 class SnippetSerializer(serializers.HyperlinkedModelSerializer):
-    owner = serializers.HyperlinkedRelatedField(read_only=True, view_name = "snippets:user-detail")
+    owner = serializers.HyperlinkedRelatedField(
+        read_only=True, view_name="snippets:user-detail"
+    )
     highlight = serializers.HyperlinkedIdentityField(
         view_name="snippets:snippet-highlight", format="html"
-    ) 
-    fuente = serializers.HyperlinkedRelatedField(queryset = book.objects.all(), read_only=False, view_name = "snippets:book-detail", required = False, allow_null=True)
-    likes_count = serializers.IntegerField(source='like.count', read_only=True)
+    )
+    fuente = serializers.HyperlinkedRelatedField(
+        queryset=book.objects.all(),
+        read_only=False,
+        view_name="snippets:book-detail",
+        required=False,
+        allow_null=True,
+    )
+    likes_count = serializers.IntegerField(source="like.count", read_only=True)
     comments = CommentSerializer(many=True, read_only=True, default=None)
 
     class Meta:
@@ -92,120 +118,145 @@ class SnippetSerializer(serializers.HyperlinkedModelSerializer):
             "fuente",
             "draft",
             "likes_count",
-            "comments"
+            "comments",
         ]
 
-        extra_kwargs = {'url': {'view_name': 'snippets:snippet-detail'}}
+        extra_kwargs = {"url": {"view_name": "snippets:snippet-detail"}}
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     snippets = serializers.HyperlinkedRelatedField(
         many=True, view_name="snippets:snippet-detail", read_only=True
     )
-    followers = serializers.IntegerField(source='followed.count', read_only=True)
+    followers = serializers.IntegerField(source="followed.count", read_only=True)
 
     class Meta:
         model = User
         fields = ["url", "id", "username", "snippets", "followers"]
-        extra_kwargs = {'url': {'view_name': 'snippets:user-detail'}}
+        extra_kwargs = {"url": {"view_name": "snippets:user-detail"}}
 
 
 class BookSerializer(serializers.HyperlinkedModelSerializer):
-    snippets = serializers.HyperlinkedRelatedField(many = True, read_only = True, view_name="snippets:snippet-detail")
-    author = serializers.HyperlinkedRelatedField(queryset= User.objects.all(), read_only=False,view_name="snippets:user-detail")
-    editorial = serializers.HyperlinkedRelatedField(queryset=editorial.objects.all(), view_name="snippets:editorial-detail")
-    opinions = serializers.HyperlinkedRelatedField(many=True, read_only = True, view_name = "snippets:opinion-detail")
+    snippets = serializers.HyperlinkedRelatedField(
+        many=True, read_only=True, view_name="snippets:snippet-detail"
+    )
+    author = serializers.HyperlinkedRelatedField(
+        queryset=User.objects.all(), read_only=False, view_name="snippets:user-detail"
+    )
+    editorial = serializers.HyperlinkedRelatedField(
+        queryset=editorial.objects.all(), view_name="snippets:editorial-detail"
+    )
+    opinions = serializers.HyperlinkedRelatedField(
+        many=True, read_only=True, view_name="snippets:opinion-detail"
+    )
+
     class Meta:
         model = book
         fields = ["url", "id", "title", "snippets", "author", "editorial", "opinions"]
-        extra_kwargs = {'url': {'view_name': 'snippets:book-detail'}}
+        extra_kwargs = {"url": {"view_name": "snippets:book-detail"}}
 
-class UserRegistrationSerializer(serializers.ModelSerializer): #model serializer: 
+
+class UserRegistrationSerializer(serializers.ModelSerializer):  # model serializer:
     password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
         fields = ["username", "email", "password", "first_name", "last_name"]
 
-    def create(self, validated_data): #per utilitzar validated_data necessitem o un create o un update
+    def create(
+        self, validated_data
+    ):  # per utilitzar validated_data necessitem o un create o un update
         user = User.objects.create_user(
-            username= validated_data["username"], #o retornen les dades validades o salta excepció
-            email = validated_data["email"],
-            password = validated_data["password"],
-            first_name = validated_data.get("first_name", ""),
-            last_name = validated_data.get("last_name", ""),
-        )   
+            username=validated_data[
+                "username"
+            ],  # o retornen les dades validades o salta excepció
+            email=validated_data["email"],
+            password=validated_data["password"],
+            first_name=validated_data.get("first_name", ""),
+            last_name=validated_data.get("last_name", ""),
+        )
         return user
 
+
 class EditorialSerializer(serializers.HyperlinkedModelSerializer):
-    books = serializers.HyperlinkedRelatedField(many = True, read_only = True, view_name = "snippets:book-detail")
+    books = serializers.HyperlinkedRelatedField(
+        many=True, read_only=True, view_name="snippets:book-detail"
+    )
+
     class Meta:
         model = editorial
         fields = ["url", "id", "name", "books", "email", "countries"]
-        extra_kwargs = {
-            'url': {'view_name': 'snippets:editorial-detail'}
-        }
+        extra_kwargs = {"url": {"view_name": "snippets:editorial-detail"}}
+
 
 class OpinionSerializer(serializers.HyperlinkedModelSerializer):
-    book = serializers.HyperlinkedRelatedField(queryset = book.objects.all(), view_name = "snippets:book-detail")
-    author = serializers.ReadOnlyField(source = 'author.username')
+    book = serializers.HyperlinkedRelatedField(
+        queryset=book.objects.all(), view_name="snippets:book-detail"
+    )
+    author = serializers.ReadOnlyField(source="author.username")
+
     class Meta:
         model = opinion
         fields = ["url", "id", "title", "text", "rating", "author", "book", "date"]
-        extra_kwargs = {
-            'url': {'view_name': 'snippets:opinion-detail'}
-        }
+        extra_kwargs = {"url": {"view_name": "snippets:opinion-detail"}}
+
 
 class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = country
         fields = ["id", "name"]
 
+
 class RegionSerializer(serializers.ModelSerializer):
     country = serializers.SlugRelatedField(
-        queryset=country.objects.all(),
-        slug_field='name'
+        queryset=country.objects.all(), slug_field="name"
     )
+
     class Meta:
         model = region
-        fields = '__all__'
+        fields = "__all__"
+
 
 class MunicipalitySerializer(serializers.ModelSerializer):
     region = serializers.StringRelatedField()
+
     class Meta:
         model = municipality
-        fields = '__all__'
+        fields = "__all__"
+
 
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = city
-        fields = '__all__'
+        fields = "__all__"
         validators = [
             UniqueTogetherValidator(
-                queryset=municipality.objects.all(),
-                fields = ['name', 'region']
+                queryset=municipality.objects.all(), fields=["name", "region"]
             )
         ]
+
 
 class TownSerializer(serializers.ModelSerializer):
     class Meta:
         model = town
-        fields = '__all__'
+        fields = "__all__"
         validators = [
             UniqueTogetherValidator(
-                queryset=municipality.objects.all(),
-                fields = ['name', 'region']
+                queryset=municipality.objects.all(), fields=["name", "region"]
             )
         ]
+
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = '__all__'
+        fields = "__all__"
+
 
 class NotificationSerializer(serializers.ModelSerializer):
-    actor = serializers.ReadOnlyField(source='actor.username')
+    actor = serializers.ReadOnlyField(source="actor.username")
     target = serializers.StringRelatedField()
 
     class Meta:
         model = Notification
-        fields = ['id', 'actor', 'verb', 'target', 'created', 'read']
+        fields = ["id", "actor", "verb", "target", "created", "read"]

@@ -7,13 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('snippets', '0011_municipality_city_town'),
+        ("snippets", "0011_municipality_city_town"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='town',
-            name='population',
-            field=models.IntegerField(validators=[django.core.validators.MaxValueValidator(9999)]),
+            model_name="town",
+            name="population",
+            field=models.IntegerField(
+                validators=[django.core.validators.MaxValueValidator(9999)]
+            ),
         ),
     ]
