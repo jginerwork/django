@@ -23,6 +23,19 @@ repos:
     rev: 5.13.2
     hooks:
       - id: isort
+        args:
+          - "--profile"
+          - "black"
+          - "--filter-files"
+          # Aquí forzamos una por una tus carpetas
+          - "-p"
+          - "snippets"
+          - "-p"
+          - "polls"
+          - "-p"
+          - "tutorial"
+          - "-p"
+          - "tests"
 
   # 4. Black (Formatea todo el código AL FINAL)
   - repo: https://github.com/psf/black
