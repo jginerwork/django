@@ -1,0 +1,10 @@
+[run]
+# Omitir archivos que no vale la pena testear
+omit =
+    */migrations/*
+    */__init__.py
+    */tests/*
+    manage.py
+    */settings.py
+    */wsgi.py
+    */asgi.py
