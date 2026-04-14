@@ -23,6 +23,7 @@ from django.contrib.auth.models import User
 from django.db.models import Count  # <--- Asegúrate de tener este import arriba
 from django.db.models import Q
 from django.http import JsonResponse
+from django.shortcuts import render
 from django.views import View
 from django.views.generic.list import MultipleObjectMixin
 from rest_framework import generics, mixins, permissions, renderers, viewsets
@@ -414,3 +415,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return Notification.objects.filter(recipient=self.request.user)
+
+
+def index(request, username):
+    return render(request, "index.html", {"other_username": username})

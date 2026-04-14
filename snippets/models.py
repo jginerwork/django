@@ -251,3 +251,17 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ["-created"]
+
+
+class ChatMessage(models.Model):
+    sender = models.ForeignKey(
+        "auth.User", related_name="sent_messages", on_delete=models.CASCADE
+    )
+    recipient = models.ForeignKey(
+        "auth.User", related_name="received_messages", on_delete=models.CASCADE
+    )
+    message = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["timestamp"]
