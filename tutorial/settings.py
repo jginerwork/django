@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",  # per a poder usar ASGI i Channels en el futuro
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -143,3 +144,11 @@ LOGIN_REDIRECT_URL = "/"
 
 # Redirigir aquí tras hacer LOGOUT (opcional pero recomendado)
 LOGOUT_REDIRECT_URL = "/"
+
+ASGI_APPLICATION = "tutorial.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}

@@ -1,0 +1,37 @@
+<textarea id="chat-log" cols="100" rows="20" readonly></textarea><br>
+<input id="chat-message-input" type="text" size="100"><br>
+<input id="chat-message-submit" type="button" value="Enviar">
+
+<script>
+    // Crea la conexión con el servidor
+    const otherUser = "{{ other_username }}";
+
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/chat/' + otherUser + '/'
+    );
+
+    // Qué hacer cuando llega un mensaje del servidor
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        document.querySelector('#chat-log').value += (data.message + '\n');
+    };
+
+    // Enviar mensaje al pulsar el botón
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+        chatSocket.send(message); // Aquí tu Consumer recibirá el 'text_data'
+        messageInputDom.value = '';
+    };
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const chatLog = document.querySelector('#chat-log');
+
+        // Añadimos el mensaje (que ya viene formateado como "Nombre: Mensaje")
+        chatLog.value += (data.message + '\n');
+
+        // Auto-scroll hacia abajo
+        chatLog.scrollTop = chatLog.scrollHeight;
+    };
+</script>

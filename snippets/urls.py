@@ -69,4 +69,5 @@ urlpatterns = [
     path("municipalities", views.MunicipalityList.as_view(), name="get-municipality"),
     path("city", views.CityList.as_view(), name="get-city"),
     path("town", views.TownList.as_view(), name="get-town"),
+    path("chat/<str:username>/", views.index, name="chat_privado"),
 ]
