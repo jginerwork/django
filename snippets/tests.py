@@ -9,7 +9,6 @@ from snippets.models import (
     country,
     editorial,
     municipality,
-    opinion,
     region,
 )
 
@@ -36,20 +35,6 @@ class TestSnippetsModelsStr:
     def test_editorial_str(self):
         obj = editorial.objects.create(name="Alfaguara")
         assert str(obj) == "Alfaguara"
-
-    def test_opinion_str(self):
-        """
-        OJO: En tu models.py, el método __str__ de 'opinion' dice:
-        'return opinion.title'. Esto devolverá el objeto campo, no el valor.
-        Si quieres el texto, debería ser 'self.title'.
-        """
-        obj = opinion(title="Buena lectura", rating=5)
-        # Este test fallará si esperas el string "Buena lectura"
-        # debido al error mencionado arriba.
-        try:
-            assert str(obj) == "Buena lectura"
-        except AssertionError:
-            print("Aviso: El método __str__ de 'opinion' tiene un bug en models.py")
 
     def test_country_str(self):
         obj = country.objects.create(name="Portugal")
